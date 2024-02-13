@@ -131,6 +131,15 @@ public class NumberGuesser4 {
         } else {
             System.out.println("That's wrong");
             strikes++;
+            //higher lower addon oha2 2/9/2024
+            if (guess < number){
+                System.out.println("Higher");
+            }
+        
+                else{
+                    System.out.println("Lower");
+
+            }
             if (strikes >= maxStrikes) {
                 lose();
                 pickNewRandom = true;
