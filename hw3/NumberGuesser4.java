@@ -125,6 +125,24 @@ public class NumberGuesser4 {
             return;
         }
         System.out.println("You guessed " + guess);
+         //hot cold addon oha2 2/12/2024
+        if (Math.abs(guess-number)>= 10){
+            System.out.println("Frigid");
+        
+        }
+        else if (Math.abs(guess-number)>= 5){
+            System.out.println("Cold");
+        
+        }
+        else if (Math.abs(guess-number)>= 2){
+        System.out.println("Hot");
+    
+        }
+        else{
+        System.out.println("On Fire!!!");
+         
+
+        }
         if (guess == number) {
             win();
             pickNewRandom = true;
@@ -140,6 +158,8 @@ public class NumberGuesser4 {
                     System.out.println("Lower");
 
             }
+           
+           
             if (strikes >= maxStrikes) {
                 lose();
                 pickNewRandom = true;
@@ -200,3 +220,6 @@ public class NumberGuesser4 {
         ng.start();
     }
 }
+
+
+
