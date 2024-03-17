@@ -1,4 +1,4 @@
-package milestone1;
+package Project;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-package milestone1;
+package Project;
 
 public enum PayloadType {
     CONNECT, DISCONNECT, MESSAGE
