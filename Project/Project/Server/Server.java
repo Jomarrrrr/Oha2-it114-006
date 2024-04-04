@@ -10,6 +10,7 @@ import java.util.Queue;
 import java.util.logging.Logger;
 
 import Project.Common.Constants;
+import Project.Common.ServerConstants;
 import Project.Common.TextFX;
 import Project.Common.TextFX.Color;
 
@@ -188,9 +189,9 @@ public enum Server {
         } else {
             // Chatroom probably doesn't need gameroom and can just have this line
             // uncommented instead
-            // Room room = new Room(roomName);
+            Room room = new Room(roomName);
             // other projects, any new room is a GameRoom
-            GameRoom room = new GameRoom(roomName);
+           // GameRoom room = new GameRoom(roomName);
             rooms.add(room);
             logger.info("Created new room: " + roomName);
             return true;
@@ -226,9 +227,55 @@ public enum Server {
 
     private boolean processCommand(String message) {
         logger.info("Checking command: " + message);
-        // TODO
+        
+        // Check if the message is a command
+        if (message.startsWith("/")) {
+            String[] parts = message.split(" ");
+            String command = parts[0].toLowerCase(); // Extract the command
+    
+            switch (command) {
+                case "/roll":
+                    if (parts.length == 2) {
+                        String argument = parts[1].toLowerCase();
+                        if (argument.matches("\\d+d\\d+")) { // Check if it's in the format "NdN"
+                            // Process the roll command with NdN format
+                            String[] rollParams = argument.split("d");
+                            int numDice = Integer.parseInt(rollParams[0]);
+                            int numSides = Integer.parseInt(rollParams[1]);
+                            int total = 0;
+                            StringBuilder rollResult = new StringBuilder();
+                            for (int i = 0; i < numDice; i++) {
+                                int roll = (int) (Math.random() * numSides) + 1;
+                                total += roll;
+                                rollResult.append(roll).append(" ");
+                            }
+                            broadcast("Rolled " + numDice + "d" + numSides + ": " + rollResult.toString() + "(Total: " + total + ")");
+                        } else if (argument.matches("\\d+")) { // Check if it's in the format "0-X" or "1-X"
+                            int startValue = Integer.parseInt(argument);
+                            broadcast("Starting at: " + startValue);
+                        } else {
+                            // Invalid roll format
+                            logger.info("Invalid roll format: " + argument);
+                        }
+                    } else {
+                        // Invalid number of arguments for /roll command
+                        logger.info("Invalid number of arguments for /roll command");
+                    }
+                    return true;
+                case "/flip":
+                    // Process the flip command
+                    String result = Math.random() < 0.5 ? "Heads" : "Tails";
+                    broadcast("Coin flip result: " + result);
+                    return true;
+                default:
+                    // Unknown command
+                    logger.info("Unknown command: " + command);
+                    return false;
+            }
+        }
         return false;
     }
+    
 
     public static void main(String[] args) {
         Server.INSTANCE.logger.info("Starting Server");

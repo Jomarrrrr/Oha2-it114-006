@@ -9,13 +9,10 @@ import java.util.logging.Logger;
 
 import Project.Common.ConnectionPayload;
 import Project.Common.Constants;
-import Project.Common.GameChoice;
 import Project.Common.Payload;
 import Project.Common.PayloadType;
-import Project.Common.ReadyPayload;
 import Project.Common.RoomResultsPayload;
 import Project.Common.TextFX;
-import Project.Common.TurnStatusPayload;
 import Project.Common.TextFX.Color;
 
 /**
@@ -86,44 +83,6 @@ public class ServerThread extends Thread {
     }
 
     // send methods
-    protected boolean sendCurrentPlayerTurn(long clientId) {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.CURRENT_TURN);
-        p.setClientId(clientId);
-        return send(p);
-    }
-
-    protected boolean sendResetLocalReadyState() {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.RESET_READY);
-        return send(p);
-    }
-
-    protected boolean sendResetLocalTurns() {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.RESET_TURNS);
-        return send(p);
-    }
-
-    protected boolean sendPlayerTurnStatus(long clientId, boolean didTakeTurn) {
-        TurnStatusPayload tsp = new TurnStatusPayload();
-        tsp.setClientId(clientId);
-        tsp.setDidTakeTurn(didTakeTurn);
-        return send(tsp);
-    }
-    protected boolean sendReadyState(long clientId, boolean isReady) {
-        ReadyPayload rp = new ReadyPayload();
-        rp.setReady(isReady);
-        rp.setClientId(clientId);
-        return send(rp);
-    }
-
-    protected boolean sendPhase(String phase) {
-        Payload p = new Payload();
-        p.setPayloadType(PayloadType.PHASE);
-        p.setMessage(phase);
-        return send(p);
-    }
     protected boolean sendClientMapping(long id, String name) {
         ConnectionPayload cp = new ConnectionPayload();
         cp.setPayloadType(PayloadType.SYNC_CLIENT);
@@ -276,25 +235,6 @@ public class ServerThread extends Thread {
                 List<String> potentialRooms = Room.listRooms(searchString, limit);
                 this.sendListRooms(potentialRooms);
                 break;
-            case READY:
-                try {
-                    ((GameRoom) currentRoom).setReady(this);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    this.sendMessage(Constants.DEFAULT_CLIENT_ID,
-                            "You can only use the /ready commmand in a GameRoom and not the Lobby");
-                }
-
-                break;
-            case TURN:
-                try {
-                    ((GameRoom) currentRoom).doTurn(this);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    this.sendMessage(Constants.DEFAULT_CLIENT_ID,
-                            "You can only use the /turn commmand in a GameRoom and not the Lobby");
-                }
-                break;
             default:
                 break;
 
@@ -315,28 +255,4 @@ public class ServerThread extends Thread {
     public long getClientId() {
         return clientId;
     }
-    //rps stuff ````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````````
-     // Method to handle Rock-Paper-Scissors game initiation
-     public void initiateRockPaperScissors(String choiceInput) {
-        // Lets user type R P or S
-        GameChoice playerChoice;
-        switch (choiceInput.toUpperCase()) {
-            case "R":
-                playerChoice = GameChoice.ROCK;
-                break;
-            case "P":
-                playerChoice = GameChoice.PAPER;
-                break;
-            case "S":
-                playerChoice = GameChoice.SCISSORS;
-                break;
-            default:
-                // Makes sure input is R P or S
-                sendMessage(Constants.DEFAULT_CLIENT_ID, "Invalid choice. Please enter R, P, or S.");
-                return; 
-        }
-
-    }
-
-   
 }
