@@ -10,6 +10,9 @@ import java.util.Queue;
 import java.util.logging.Logger;
 
 import Project.Common.Constants;
+import Project.Common.FlipPayload;
+import Project.Common.RollPayload;
+import Project.Common.ServerConstants;
 import Project.Common.TextFX;
 import Project.Common.TextFX.Color;
 
@@ -180,6 +183,8 @@ public enum Server {
      * @param roomName The desired room to create
      * @return true if it was created and false if it exists
      */
+
+     //oha2 4/1/2024
     protected synchronized boolean createNewRoom(String roomName) {
         if (getRoom(roomName) != null) {
             // TODO can't create room
@@ -188,9 +193,9 @@ public enum Server {
         } else {
             // Chatroom probably doesn't need gameroom and can just have this line
             // uncommented instead
-            // Room room = new Room(roomName);
+            Room room = new Room(roomName);
             // other projects, any new room is a GameRoom
-            GameRoom room = new GameRoom(roomName);
+           // GameRoom room = new GameRoom(roomName);
             rooms.add(room);
             logger.info("Created new room: " + roomName);
             return true;
@@ -223,12 +228,9 @@ public enum Server {
             }
         }
     }
+    //oha2 4/3/2024
 
-    private boolean processCommand(String message) {
-        logger.info("Checking command: " + message);
-        // TODO
-        return false;
-    }
+    //oha2 april 1, 2024
 
     public static void main(String[] args) {
         Server.INSTANCE.logger.info("Starting Server");
