@@ -10,6 +10,8 @@ import java.util.Queue;
 import java.util.logging.Logger;
 
 import Project.Common.Constants;
+import Project.Common.FlipPayload;
+import Project.Common.RollPayload;
 import Project.Common.ServerConstants;
 import Project.Common.TextFX;
 import Project.Common.TextFX.Color;
@@ -181,6 +183,8 @@ public enum Server {
      * @param roomName The desired room to create
      * @return true if it was created and false if it exists
      */
+
+     //oha2 4/1/2024
     protected synchronized boolean createNewRoom(String roomName) {
         if (getRoom(roomName) != null) {
             // TODO can't create room
@@ -224,7 +228,7 @@ public enum Server {
             }
         }
     }
-
+    //oha2 4/3/2024
     private boolean processCommand(String message) {
         logger.info("Checking command: " + message);
         
@@ -233,47 +237,72 @@ public enum Server {
             String[] parts = message.split(" ");
             String command = parts[0].toLowerCase(); // Extract the command
     
-            switch (command) {
-                case "/roll":
-                    if (parts.length == 2) {
-                        String argument = parts[1].toLowerCase();
-                        if (argument.matches("\\d+d\\d+")) { // Check if it's in the format "NdN"
-                            // Process the roll command with NdN format
-                            String[] rollParams = argument.split("d");
-                            int numDice = Integer.parseInt(rollParams[0]);
-                            int numSides = Integer.parseInt(rollParams[1]);
-                            int total = 0;
-                            StringBuilder rollResult = new StringBuilder();
-                            for (int i = 0; i < numDice; i++) {
-                                int roll = (int) (Math.random() * numSides) + 1;
-                                total += roll;
-                                rollResult.append(roll).append(" ");
-                            }
-                            broadcast("Rolled " + numDice + "d" + numSides + ": " + rollResult.toString() + "(Total: " + total + ")");
-                        } else if (argument.matches("\\d+")) { // Check if it's in the format "0-X" or "1-X"
-                            int startValue = Integer.parseInt(argument);
-                            broadcast("Starting at: " + startValue);
-                        } else {
-                            // Invalid roll format
-                            logger.info("Invalid roll format: " + argument);
-                        }
-                    } else {
-                        // Invalid number of arguments for /roll command
-                        logger.info("Invalid number of arguments for /roll command");
-                    }
-                    return true;
-                case "/flip":
-                    // Process the flip command
-                    String result = Math.random() < 0.5 ? "Heads" : "Tails";
-                    broadcast("Coin flip result: " + result);
-                    return true;
-                default:
-                    // Unknown command
-                    logger.info("Unknown command: " + command);
-                    return false;
+  switch (command) {
+    case "/roll":
+        if (parts.length == 2) {
+            String argument = parts[1].toLowerCase();
+            if (argument.matches("\\d+d\\d+")) { // Check if it's in the format "NdN"
+                // Process the roll command with NdN format
+                String[] rollParams = argument.split("d");
+                int numDice = Integer.parseInt(rollParams[0]);
+                int numSides = Integer.parseInt(rollParams[1]);
+                RollPayload rollPayload = new RollPayload(numDice, numSides);
+                broadcast("Rolled " + numDice + "d" + numSides + ": " + rollPayload.toString());
+            } else if (argument.matches("\\d+")) { // Check if it's in the format "0-X" or "1-X"
+                int startValue = Integer.parseInt(argument);
+                broadcast("Starting at: " + startValue);
+            } else {
+                // Invalid roll format
+                logger.info("Invalid roll format: " + argument);
+            }
+        } else {
+            // Invalid number of arguments for /roll command
+            logger.info("Invalid number of arguments for /roll command");
+        }
+        return true;
+    case "/flip":
+        // Process the flip command
+        String result = Math.random() < 0.5 ? "Heads" : "Tails";
+        FlipPayload flipPayload = new FlipPayload(result);
+        broadcast("Coin flip result: " + flipPayload.toString());
+        return true;
+    default:
+        // Unknown command
+        logger.info("Unknown command: " + command);
+        return false;
+}
+        } else {
+            // Process text formatting commands
+            if (message.contains("*") || message.contains("!") || message.contains("_") || message.contains("#")) {
+                // Apply formatting based on symbols
+                message = applyFormatting(message);
+                
+                broadcast(message);
+                
+                return true;
             }
         }
         return false;
+    }
+    
+    private String applyFormatting(String message) {
+        // Replace * with <b> and </b> tags for bold
+        message = message.replaceAll("\\*(.*?)\\*", "<b>$1</b>");
+        
+        // Replace ! with <i> and </i> tags for italic
+        message = message.replaceAll("!(.*?)!", "<i>$1</i>");
+        
+        // Replace _ with <u> and </u> tags for underline
+        message = message.replaceAll("_(.*?)_", "<u>$1</u>");
+
+        //the color ones 
+        message = message.replaceAll("#r(.*?)r#", "< color='red'>$1</color>");
+
+        message = message.replaceAll("#b(.*?)b#", "< color='blue'>$1</color>");
+
+        message = message.replaceAll("#g(.*?)g#", "< color='green'>$1</color>");
+        
+        return message;
     }
     
 

@@ -3,7 +3,7 @@ package Project.Common;
 /**
  * For chatroom projects, you can call this "User"
  */
-public class Player {
+public class User {
     private boolean isReady;
 
 
