@@ -10,8 +10,6 @@ import java.util.Queue;
 import java.util.logging.Logger;
 
 import Project.Common.Constants;
-import Project.Common.FlipPayload;
-import Project.Common.RollPayload;
 import Project.Common.ServerConstants;
 import Project.Common.TextFX;
 import Project.Common.TextFX.Color;
@@ -229,7 +227,11 @@ public enum Server {
         }
     }
     //oha2 4/3/2024
-
+    private boolean processCommand(String message) {
+        logger.info("Checking command: " + message);
+        // TODO
+        return false;
+    }
     //oha2 april 1, 2024
 
     public static void main(String[] args) {

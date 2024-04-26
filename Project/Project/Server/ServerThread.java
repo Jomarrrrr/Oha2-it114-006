@@ -235,6 +235,12 @@ public class ServerThread extends Thread {
                 List<String> potentialRooms = Room.listRooms(searchString, limit);
                 this.sendListRooms(potentialRooms);
                 break;
+                case FLIP:
+                Room.flip(p.getMessage(), this);
+                break;
+                case ROLL:
+                Room.roll(p.getMessage(), this); 
+            break;
             default:
                 break;
 

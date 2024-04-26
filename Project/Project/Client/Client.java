@@ -18,16 +18,17 @@ import Project.Common.PayloadType;
 import Project.Common.RoomResultsPayload;
 import Project.Common.TextFX;
 import Project.Common.TextFX.Color;
+import Project.Server.Room;
 
 public enum Client {
     INSTANCE;
 
-    Socket server = null;
-    ObjectOutputStream out = null;
-    ObjectInputStream in = null;
+    private Socket server = null;
+    private ObjectOutputStream out = null;
+    private ObjectInputStream in = null;
     final String ipAddressPattern = "/connect\\s+(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}:\\d{3,5})";
     final String localhostPattern = "/connect\\s+(localhost:\\d{3,5})";
-    boolean isRunning = false;
+    private boolean isRunning = false;
     private Thread inputThread;
     private Thread fromServerThread;
     private String clientName = "";
@@ -37,12 +38,16 @@ public enum Client {
     private static final String LIST_ROOMS = "/listrooms";
     private static final String LIST_USERS = "/users";
     private static final String DISCONNECT = "/disconnect";
+    private static final String FLIP = "/flip";
+    private static final String TOSS = "/toss";
 
     // client id, is the key, client name is the value
     private ConcurrentHashMap<Long, String> clientsInRoom = new ConcurrentHashMap<Long, String>();
     private long myClientId = Constants.DEFAULT_CLIENT_ID;
     private Logger logger = Logger.getLogger(Client.class.getName());
 
+    // callback that updates the UI
+    private static IClientEvents events;
 
 
     public boolean isConnected() {
@@ -56,14 +61,7 @@ public enum Client {
         return server.isConnected() && !server.isClosed() && !server.isInputShutdown() && !server.isOutputShutdown();
 
     }
-
-    /**
-     * Takes an ip address and a port to attempt a socket connection to a server.
-     * 
-     * @param address
-     * @param port
-     * @return true if connection was successful
-     */
+    @Deprecated
     private boolean connect(String address, int port) {
         try {
             server = new Socket(address, port);
@@ -72,7 +70,7 @@ public enum Client {
             // channel to listen to server
             in = new ObjectInputStream(server.getInputStream());
             logger.info("Client connected");
-            listenForServerMessage();
+            listenForServerPayload();
             sendConnect();
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -81,6 +79,36 @@ public enum Client {
         }
         return isConnected();
     }
+
+    /**
+     * Takes an ip address and a port to attempt a socket connection to a server.
+     * 
+     * @param address
+     * @param port
+     * @param username
+     * @param callback (for triggering UI events)
+     * @return true if connection was successful
+     */
+    public boolean connect(String address, int port, String username, IClientEvents callback) {
+        clientName = username;
+        Client.events = callback;
+        try {
+            server = new Socket(address, port);
+            // channel to send to server
+            out = new ObjectOutputStream(server.getOutputStream());
+            // channel to listen to server
+            in = new ObjectInputStream(server.getInputStream());
+            logger.info("Client connected");
+            listenForServerPayload();
+            sendConnect();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return isConnected();
+    }
+
 
     /**
      * <p>
@@ -189,30 +217,32 @@ public enum Client {
             }
             return true;
         }
+       
         return false;
     }
 
     // Send methods
-    private void sendDisconnect() throws IOException {
+    void sendDisconnect() throws IOException {
         ConnectionPayload cp = new ConnectionPayload();
         cp.setPayloadType(PayloadType.DISCONNECT);
         out.writeObject(cp);
     }
-    private void sendCreateRoom(String roomName) throws IOException {
+
+    public void sendCreateRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.CREATE_ROOM);
         p.setMessage(roomName);
         out.writeObject(p);
     }
 
-    private void sendJoinRoom(String roomName) throws IOException {
+    public void sendJoinRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.JOIN_ROOM);
         p.setMessage(roomName);
         out.writeObject(p);
     }
 
-    private void sendListRooms(String searchString) throws IOException {
+    public void sendListRooms(String searchString) throws IOException {
         // Updated after video to use RoomResultsPayload so we can (later) use a limit
         // value
         RoomResultsPayload p = new RoomResultsPayload();
@@ -228,14 +258,25 @@ public enum Client {
         out.writeObject(p);
     }
 
-    private void sendMessage(String message) throws IOException {
+    public void sendMessage(String message) throws IOException {
         Payload p = new Payload();
+
+        if (message.startsWith("/") && message.equalsIgnoreCase("FLIP")) {
+            p.setPayloadType(PayloadType.FLIP);
+            return;
+        }
+        else if (message.startsWith("/") && message.equalsIgnoreCase("ROLL")) {
+            p.setPayloadType(PayloadType.ROLL);
+            return;
+        }
+        
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         // no need to send an identifier, because the server knows who we are
         // p.setClientName(clientName);
         out.writeObject(p);
     }
+
 
     // end send methods
     private void listenForKeyboard() {
@@ -274,6 +315,37 @@ public enum Client {
             }
         };
         inputThread.start();
+    }
+    private void listenForServerPayload() {
+        fromServerThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    Payload fromServer;
+
+                    // while we're connected, listen for strings from server
+                    while (!server.isClosed() && !server.isInputShutdown()
+                            && (fromServer = (Payload) in.readObject()) != null) {
+
+                        logger.info("Debug Info: " + fromServer);
+                        processPayload(fromServer);
+
+                    }
+                    logger.info("Loop exited");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    if (!server.isClosed()) {
+                        logger.severe("Server closed connection");
+                    } else {
+                        logger.severe("Connection closed");
+                    }
+                } finally {
+                    close();
+                    logger.info("Stopped listening to server input");
+                }
+            }
+        };
+        fromServerThread.start();// start the thread
     }
 
     private void listenForServerMessage() {
@@ -320,7 +392,7 @@ public enum Client {
         }
     }
 
-    private String getClientNameFromId(long id) {
+    protected String getClientNameFromId(long id) {
         if (clientsInRoom.containsKey(id)) {
             return clientsInRoom.get(id);
         }
@@ -345,8 +417,10 @@ public enum Client {
                 } else {
                     logger.info(TextFX.colorize("Setting client id to default", Color.RED));
                 }
+                events.onReceiveClientId(p.getClientId());
                 break;
             case CONNECT:// for now connect,disconnect are all the same
+
             case DISCONNECT:
                 ConnectionPayload cp = (ConnectionPayload) p;
                 message = TextFX.colorize(String.format("*%s %s*",
@@ -357,13 +431,24 @@ public enum Client {
                 ConnectionPayload cp2 = (ConnectionPayload) p;
                 if (cp2.getPayloadType() == PayloadType.CONNECT || cp2.getPayloadType() == PayloadType.SYNC_CLIENT) {
                     addClientReference(cp2.getClientId(), cp2.getClientName());
+
                 } else if (cp2.getPayloadType() == PayloadType.DISCONNECT) {
                     removeClientReference(cp2.getClientId());
+                }
+                // TODO refactor this to avoid all these messy if condition (resulted from poor
+                // planning ahead)
+                if (cp2.getPayloadType() == PayloadType.CONNECT) {
+                    events.onClientConnect(p.getClientId(), cp2.getClientName(), p.getMessage());
+                } else if (cp2.getPayloadType() == PayloadType.DISCONNECT) {
+                    events.onClientDisconnect(p.getClientId(), cp2.getClientName(), p.getMessage());
+                } else if (cp2.getPayloadType() == PayloadType.SYNC_CLIENT) {
+                    events.onSyncClient(p.getClientId(), cp2.getClientName());
                 }
 
                 break;
             case JOIN_ROOM:
                 clientsInRoom.clear();// we changed a room so likely need to clear the list
+                events.onResetUserList();
                 break;
             case MESSAGE:
 
@@ -371,6 +456,7 @@ public enum Client {
                         getClientNameFromId(p.getClientId()),
                         p.getMessage()), Color.BLUE);
                 System.out.println(message);
+                events.onMessageReceive(p.getClientId(), p.getMessage());
                 break;
             case LIST_ROOMS:
                 try {
@@ -387,15 +473,26 @@ public enum Client {
                         String msg = String.format("%s %s", (i + 1), rooms.get(i));
                         System.out.println(TextFX.colorize(msg, Color.CYAN));
                     }
+                    events.onReceiveRoomList(rp.getRooms(), rp.getMessage());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
-            default:
+                case FLIP:
+                    
+                
+                break;
+                case ROLL:{
+
+                }
+
+                break;
+                default:
                 break;
 
         }
     }
+
 
     public void start() throws IOException {
         listenForKeyboard();
