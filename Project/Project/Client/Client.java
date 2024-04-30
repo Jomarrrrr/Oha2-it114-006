@@ -217,6 +217,15 @@ public enum Client {
             }
             return true;
         }
+        else if (text.equalsIgnoreCase("/flip")) {
+            try {
+                sendMessage(text);
+            }
+            catch(Exception e){
+              e.printStackTrace(); 
+            }
+            return true;
+        }
        
         return false;
     }
@@ -260,14 +269,17 @@ public enum Client {
 
     public void sendMessage(String message) throws IOException {
         Payload p = new Payload();
-
-        if (message.startsWith("/") && message.equalsIgnoreCase("FLIP")) {
+        message = message.toLowerCase();
+        if (message.startsWith("/flip")) {
             p.setPayloadType(PayloadType.FLIP);
-            return;
+            
+            
+            
         }
         else if (message.startsWith("/") && message.equalsIgnoreCase("ROLL")) {
             p.setPayloadType(PayloadType.ROLL);
-            return;
+           
+           
         }
         
         p.setPayloadType(PayloadType.MESSAGE);

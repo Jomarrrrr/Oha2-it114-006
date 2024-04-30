@@ -1,5 +1,7 @@
 package Project.Server;
 
+import java.util.Random;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -7,6 +9,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 import Project.Common.Constants;
+import Project.Client.Client;
 
 public class Room implements AutoCloseable {
     // protected static Server server;// used to refer to accessible server
@@ -116,6 +119,23 @@ public class Room implements AutoCloseable {
                      * Room.disconnectClient(client, this);
                      * break;
                      */
+                    case "flip" :
+                   
+                        Random num = new Random();
+                        int randomNum = num.nextInt(2) +1;
+                        String face = "test";
+                        if (randomNum == 1){
+                             face = "<b style=color:blue>You got heads!</b>";
+                             sendMessage(null, String.format(""+face));
+                        } else {
+                             face = "<b style=color:orange>You got tails!</b>";
+                             sendMessage(null, String.format(""+face));
+                        }
+                        sendMessage(null, String.format("testo"));
+
+                   
+                    break;
+
                     default:
                         wasCommand = false;
                         break;
@@ -167,20 +187,8 @@ public class Room implements AutoCloseable {
             client.sendMessage(Constants.DEFAULT_CLIENT_ID, String.format("Room %s already exists", roomName));
         }
     }
-    public static void flip(String message, ServerThread client) {
-        try {
-            int coin = rand.nextInt(2);
-            if (coin == 1){
-                String heads = "<b style=color:blue>You got heads!</b>";
-                sendMessage(client, heads);
-            } else {
-                String tails = "<b style=color:orange>You got tails!</b>";
-                sendMessage(client, tails);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+    
+    
 
 
     public static void roll(String message, ServerThread client) {
@@ -252,6 +260,8 @@ public class Room implements AutoCloseable {
         }
         info("Sending message to " + clients.size() + " clients");
         if (sender != null && processCommands(message, sender)) {
+            
+            
             // it was a command, don't broadcast
             return;
         }

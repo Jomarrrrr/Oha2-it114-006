@@ -1,5 +1,6 @@
 package Project.Server;
 
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -52,6 +53,7 @@ public class ServerThread extends Thread {
     protected boolean isRunning() {
         return isRunning;
     }
+
     protected void setClientName(String name) {
         if (name == null || name.isBlank()) {
             logger.severe("Invalid client name being set");
@@ -104,6 +106,7 @@ public class ServerThread extends Thread {
         cp.setClientName(clientName);
         return send(cp);
     }
+
     private boolean sendListRooms(List<String> potentialRooms) {
         RoomResultsPayload rp = new RoomResultsPayload();
         rp.setRooms(potentialRooms);
@@ -235,12 +238,16 @@ public class ServerThread extends Thread {
                 List<String> potentialRooms = Room.listRooms(searchString, limit);
                 this.sendListRooms(potentialRooms);
                 break;
-                case FLIP:
-                Room.flip(p.getMessage(), this);
-                break;
-                case ROLL:
-                Room.roll(p.getMessage(), this); 
+            case FLIP:
+            if (currentRoom != null) {
+                currentRoom.sendMessage(null, p.getMessage());
+            } else {
+                Room.joinRoom(Constants.LOBBY, this);
+            }
             break;
+            case ROLL:
+                Room.roll(p.getMessage(), this);
+                break;
             default:
                 break;
 
