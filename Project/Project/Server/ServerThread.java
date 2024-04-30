@@ -246,7 +246,12 @@ public class ServerThread extends Thread {
             }
             break;
             case ROLL:
-                Room.roll(p.getMessage(), this);
+            if (currentRoom != null) {
+                currentRoom.sendMessage(null, p.getMessage());
+            } else {
+                Room.joinRoom(Constants.LOBBY, this);
+            }
+                
                 break;
             default:
                 break;

@@ -49,7 +49,6 @@ public enum Client {
     // callback that updates the UI
     private static IClientEvents events;
 
-
     public boolean isConnected() {
         if (server == null) {
             return false;
@@ -61,6 +60,7 @@ public enum Client {
         return server.isConnected() && !server.isClosed() && !server.isInputShutdown() && !server.isOutputShutdown();
 
     }
+
     @Deprecated
     private boolean connect(String address, int port) {
         try {
@@ -108,7 +108,6 @@ public enum Client {
         }
         return isConnected();
     }
-
 
     /**
      * <p>
@@ -158,6 +157,7 @@ public enum Client {
      * @return true if a text was a command or triggered a command
      */
     private boolean processClientCommand(String text) {
+        String roller = text.toLowerCase();
         if (isConnection(text)) {
             if (clientName.isBlank()) {
                 logger.warning("You must set your name before you can connect via: /name your_name");
@@ -207,28 +207,49 @@ public enum Client {
                 logger.info(String.format("%s - %s", t, u));
             }));
             return true;
-        }
-        else if (text.equalsIgnoreCase(DISCONNECT)) {
+        } else if (text.equalsIgnoreCase(DISCONNECT)) {
             try {
                 sendDisconnect();
-            }
-            catch(Exception e){
-              e.printStackTrace(); 
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return true;
-        }
-        else if (text.equalsIgnoreCase("/flip")) {
+        } else if (text.equalsIgnoreCase("/flip")) {
             try {
                 sendMessage(text);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            catch(Exception e){
-              e.printStackTrace(); 
+            return true;
+
+        } else if(roller.startsWith("/roll"))
+        {
+            try {
+                sendMessage(text);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
             return true;
         }
-       
+    
+        else if(text.startsWith("@"))
+        {
+            try {
+                sendMessage(text);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return true;
+        }
+    
+    
         return false;
-    }
+        }
+    
+
+    
+
+   
 
     // Send methods
     void sendDisconnect() throws IOException {
@@ -269,19 +290,42 @@ public enum Client {
 
     public void sendMessage(String message) throws IOException {
         Payload p = new Payload();
-        message = message.toLowerCase();
-        if (message.startsWith("/flip")) {
+        if (message.contains("*") || message.contains("!") || message.contains("_") || message.contains("#")) {
+            // Replace * with <b> and </b> tags for bold
+            message = message.replaceAll("\\*(.*?)\\*", "<b>$1</b>");
+
+            // Replace ! with <i> and </i> tags for italic
+            message = message.replaceAll("!(.*?)!", "<i>$1</i>");
+
+            // Replace _ with <u> and </u> tags for underline
+            message = message.replaceAll("_(.*?)_", "<u>$1</u>");
+
+            // the color ones
+            message = message.replaceAll("#r(.*?)r#", "<font style=color:red>$1</font>");
+
+
+            message = message.replaceAll("#b(.*?)b#", "<font style=color:blue>$1</font>");
+
+
+             message = message.replaceAll("#g(.*?)g#", "<font style=color:green>$1</font>");
+
+        }
+        String iscom = message.toLowerCase();
+        if (iscom.startsWith("/flip")) {
             p.setPayloadType(PayloadType.FLIP);
-            
-            
-            
-        }
-        else if (message.startsWith("/") && message.equalsIgnoreCase("ROLL")) {
+
+        } else if (iscom.startsWith("/roll")) {
             p.setPayloadType(PayloadType.ROLL);
-           
-           
+
+        }else if (iscom.startsWith("/mute")) {
+            p.setPayloadType(PayloadType.MUTE);
+
         }
-        
+        else if (iscom.startsWith("/unmute")) {
+            p.setPayloadType(PayloadType.UNMUTE);
+
+        }
+
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         // no need to send an identifier, because the server knows who we are
@@ -289,6 +333,35 @@ public enum Client {
         out.writeObject(p);
     }
 
+    public void sendPrivate(String message) throws IOException {
+        Payload p = new Payload();
+        if (message.contains("*") || message.contains("!") || message.contains("_") || message.contains("#")) {
+            // Replace * with <b> and </b> tags for bold
+            message = message.replaceAll("\\*(.*?)\\*", "<b>$1</b>");
+
+            // Replace ! with <i> and </i> tags for italic
+            message = message.replaceAll("!(.*?)!", "<i>$1</i>");
+
+            // Replace _ with <u> and </u> tags for underline
+            message = message.replaceAll("_(.*?)_", "<u>$1</u>");
+
+            // the color ones
+            message = message.replaceAll("#r(.*?)r#", "<font style=color:red>$1</font>");
+
+            message = message.replaceAll("#b(.*?)b#", "<font style=color:blue>$1</font>");
+
+             message = message.replaceAll("#g(.*?)g#", "<font style=color:green>$1</font>");
+
+        }
+        String recipient = null;
+        String[] ws = message.split(" ");
+        for (String w : ws) {
+            if (w.startsWith("@")) {
+                recipient = w.substring(1);
+            }
+        }
+
+    }
 
     // end send methods
     private void listenForKeyboard() {
@@ -328,6 +401,7 @@ public enum Client {
         };
         inputThread.start();
     }
+
     private void listenForServerPayload() {
         fromServerThread = new Thread() {
             @Override
@@ -413,6 +487,7 @@ public enum Client {
         }
         return "[name not found]";
     }
+
     /**
      * Used to process payloads from the server-side and handle their data
      * 
@@ -490,21 +565,19 @@ public enum Client {
                     e.printStackTrace();
                 }
                 break;
-                case FLIP:
-                    
-                
-                break;
-                case ROLL:{
-
-                }
+            case FLIP:
 
                 break;
-                default:
+            case ROLL: {
+
+            }
+
+                break;
+            default:
                 break;
 
         }
     }
-
 
     public void start() throws IOException {
         listenForKeyboard();

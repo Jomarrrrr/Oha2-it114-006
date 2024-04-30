@@ -133,14 +133,57 @@ public class Room implements AutoCloseable {
                         }
                         sendMessage(null, String.format("testo"));
 
-                   
+                        
                     break;
-
+                    case "roll" :
+                    String[] parts = message.split("\\s+");
+                    if (parts.length == 2) {
+                        // Format 1: /roll 0 - X or 1 - X
+                        if (parts[1].matches("\\d+")) {
+                            int sides = Integer.parseInt(parts[1]);
+                            if (sides > 0) {
+                                int result = (int) (Math.random() * sides) + 1;
+                                sendMessage(null,"<b style=color:blue>Rolled a " + sides + "-sided die, result: " + result+"</b>");
+                                
+                            }
+                        }
+                    } else if (parts.length == 2 && parts[1].matches("\\d+d\\d+")) {
+                        // Format 2: /roll #d#
+                        String[] diceParts = parts[1].split("d");
+                        int numDice = Integer.parseInt(diceParts[0]);
+                        int sides = Integer.parseInt(diceParts[1]);
+                        if (numDice > 0 && sides > 0) {
+                            int total = 0;
+                            StringBuilder rollResults = new StringBuilder("<b style=color:blue>Rolled " + numDice + " " + sides + "-sided dice, results: ");
+                            for (int i = 0; i < numDice; i++ +"</b>") {
+                                int roll = (int) (Math.random() * sides) + 1;
+                                total += roll;
+                                rollResults.append(roll).append(", ");
+                            }
+                            rollResults.delete(rollResults.length() - 2, rollResults.length()); // Remove last ", "
+                            rollResults.append("Total: ").append(total);
+                            sendMessage(null, rollResults.toString());
+                            
+                        }
+                    }
+                    // Invalid roll format
+                    else{
+                    sendMessage(null, "<b style=color:red>Invalid roll format. Usage: /roll followed by a number , or #d#</b>");
+                    }
+                    break;
+                   
+                    case "mute" :
+                    sendMessage(null, message);
+                        break;
+                    case "unmute" :
+                    sendMessage(null, message);
+                        break;
                     default:
                         wasCommand = false;
                         break;
                     }
                 } else {
+                    //oha2 4/22
                     if (message.contains("*") || message.contains("!") || message.contains("_") || message.contains("#")) {
                             // Replace * with <b> and </b> tags for bold
                         message = message.replaceAll("\\*(.*?)\\*", "<b>$1</b>");
@@ -153,13 +196,13 @@ public class Room implements AutoCloseable {
 
 
                         //the color ones
-                        message = message.replaceAll("#r(.*?)r#", "< color='red'>$1</color>");
+                        message = message.replaceAll("#r(.*?)r#", "<font style=color:red>$1</font>");
 
 
-                        message = message.replaceAll("#b(.*?)b#", "< color='blue'>$1</color>");
+                        message = message.replaceAll("#b(.*?)b#", "<font style=color:blue>$1</font>");
 
 
-                        message = message.replaceAll("#g(.*?)g#", "< color='green'>$1</color>");
+                        message = message.replaceAll("#g(.*?)g#", "<font style=color:green>$1</font>");
                     
                     }
                 }
@@ -191,40 +234,8 @@ public class Room implements AutoCloseable {
     
 
 
-    public static void roll(String message, ServerThread client) {
-        String[] parts = message.split("\\s+");
-        if (parts.length == 2) {
-            // Format 1: /roll 0 - X or 1 - X
-            if (parts[1].matches("\\d+")) {
-                int sides = Integer.parseInt(parts[1]);
-                if (sides > 0) {
-                    int result = (int) (Math.random() * sides) + 1;
-                    client.sendMessage(Constants.DEFAULT_CLIENT_ID, "Rolled a " + sides + "-sided die, result: " + result);
-                    return;
-                }
-            }
-        } else if (parts.length == 2 && parts[1].matches("\\d+d\\d+")) {
-            // Format 2: /roll #d#
-            String[] diceParts = parts[1].split("d");
-            int numDice = Integer.parseInt(diceParts[0]);
-            int sides = Integer.parseInt(diceParts[1]);
-            if (numDice > 0 && sides > 0) {
-                int total = 0;
-                StringBuilder rollResults = new StringBuilder("Rolled " + numDice + " " + sides + "-sided dice, results: ");
-                for (int i = 0; i < numDice; i++) {
-                    int roll = (int) (Math.random() * sides) + 1;
-                    total += roll;
-                    rollResults.append(roll).append(", ");
-                }
-                rollResults.delete(rollResults.length() - 2, rollResults.length()); // Remove last ", "
-                rollResults.append("Total: ").append(total);
-                client.sendMessage(Constants.DEFAULT_CLIENT_ID, rollResults.toString());
-                return;
-            }
-        }
-        // Invalid roll format
-        client.sendMessage(Constants.DEFAULT_CLIENT_ID, "Invalid roll format. Usage: /roll 0-X or 1-X, or #d#");
-    }
+  
+        
 
 
     protected static void joinRoom(String roomName, ServerThread client) {
@@ -277,7 +288,29 @@ public class Room implements AutoCloseable {
             }
         }
     }
+    protected synchronized void sendPrivateMessage(ServerThread sender, String message) {
+        if (!isRunning) {
+            return;
+        }
+        info("Sending message to " + clients.size() + " clients");
+        if (sender != null && processCommands(message, sender)) {
+            
+            
+            // it was a command, don't broadcast
+            return;
+        }
 
+        /// String from = (sender == null ? "Room" : sender.getClientName());
+        long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
+        Iterator<ServerThread> iter = clients.iterator();
+        while (iter.hasNext()) {
+            ServerThread client = iter.next();
+            boolean messageSent = client.sendMessage(from, message);
+            if (!messageSent) {
+                handleDisconnect(iter, client);
+            }
+        }
+    }
     protected synchronized void sendConnectionStatus(ServerThread sender, boolean isConnected) {
         Iterator<ServerThread> iter = clients.iterator();
         while (iter.hasNext()) {
