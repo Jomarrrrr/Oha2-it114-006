@@ -55,7 +55,6 @@ public class Room implements AutoCloseable {
             syncClientList(client);
         }
 
-
     }
 
     protected synchronized void removeClient(ServerThread client) {
@@ -119,55 +118,132 @@ public class Room implements AutoCloseable {
                      * Room.disconnectClient(client, this);
                      * break;
                      */
-                    case "flip" :
-                   
+                    case "flip":
+
                         Random num = new Random();
-                        int randomNum = num.nextInt(2) +1;
+                        int randomNum = num.nextInt(2) + 1;
                         String face = "test";
-                        if (randomNum == 1){
-                             face = "<b style=color:blue>You got heads!</b>";
-                             sendMessage(null, String.format(""+face));
+                        if (randomNum == 1) {
+                            face = "<b style=color:blue>You got heads!</b>";
+                            sendMessage(null, String.format("" + face));
                         } else {
-                             face = "<b style=color:orange>You got tails!</b>";
-                             sendMessage(null, String.format(""+face));
+                            face = "<b style=color:orange>You got tails!</b>";
+                            sendMessage(null, String.format("" + face));
                         }
                         sendMessage(null, String.format("testo"));
 
-                   
-                    break;
+                        break;
+                    case "roll":
+                        String[] parts = message.split("\\s+");
+                        if (parts.length == 2) {
+                            // Format 1: /roll 0 - X or 1 - X
+                            if (parts[1].matches("\\d+")) {
+                                int sides = Integer.parseInt(parts[1]);
+                                if (sides > 0) {
+                                    int result = (int) (Math.random() * sides) + 1;
+                                    sendMessage(null, "<b style=color:blue>Rolled a " + sides + "-sided die, result: "
+                                            + result + "</b>");
 
+                                }
+                            }
+                        } else if (parts.length == 2 && parts[1].matches("\\d+d\\d+")) {
+                            // Format 2: /roll #d#
+                            String[] diceParts = parts[1].split("d");
+                            int numDice = Integer.parseInt(diceParts[0]);
+                            int sides = Integer.parseInt(diceParts[1]);
+                            if (numDice > 0 && sides > 0) {
+                                int total = 0;
+                                StringBuilder rollResults = new StringBuilder("<b style=color:blue>Rolled " + numDice
+                                        + " " + sides + "-sided dice, results: ");
+                                for (int i = 0; i < numDice; i++) {
+                                    int roll = (int) (Math.random() * sides) + 1;
+                                    total += roll;
+                                    rollResults.append(roll).append(", ");
+                                }
+                                rollResults.delete(rollResults.length() - 2, rollResults.length()); // Remove last ", "
+                                rollResults.append("Total: ").append(total).append("</b>");
+                                sendMessage(null, rollResults.toString());
+
+                            }
+                        }
+                        // Invalid roll format
+                        else {
+                            sendMessage(null,
+                                    "<b style=color:red>Invalid roll format. Usage: /roll followed by a number , or #d#</b>");
+                        }
+                        break;
+//oha2 4/25
+                    case "mute":
+                        String[] splitMsg = message.split(" ");
+
+                        String mutedClient = splitMsg[1];
+                        client.mutedList.add(mutedClient);
+
+                        // sends a message to the muted user and the client that muted them
+                        Iterator<ServerThread> iter = clients.iterator();
+                        while (iter.hasNext()) {
+                            ServerThread c = iter.next();
+                            if (c.getClientName().equals(mutedClient)
+                                    || c.getClientName().equals(client.getClientName())) {
+                                c.sendMessage(client.getClientId(), " <i>muted " + mutedClient + "</i>");
+                            }
+                        }
+                        sendMessage(client, "<i><b>muted " + mutedClient + "</b></i>");
+
+                        break;
+                    case "unmute":
+
+                        String[] splitArr = message.split(" ");
+                        String unmutedClient = splitArr[1];
+                        for (String name : client.mutedList) {
+                            if (name.equals(unmutedClient)) {
+                                client.mutedList.remove(unmutedClient);
+
+                                // sends a message to the unmuted user and the client that unmuted them
+                                Iterator<ServerThread> iter1 = clients.iterator();
+                                while (iter1.hasNext()) {
+                                    ServerThread c = iter1.next();
+                                    if (c.getClientName().equals(unmutedClient)
+                                            || c.getClientName().equals(client.getClientName())) {
+                                        c.sendMessage(client.getClientId(), " <i>unmuted " + unmutedClient + "</i>");
+                                    }
+                                }
+                                // sendMessage(client,"<i>unmuted "+unmutedClient+"</i>");
+
+                                break;
+                            }
+                        }
+                        break;
                     default:
                         wasCommand = false;
                         break;
-                    }
-                } else {
-                    if (message.contains("*") || message.contains("!") || message.contains("_") || message.contains("#")) {
-                            // Replace * with <b> and </b> tags for bold
-                        message = message.replaceAll("\\*(.*?)\\*", "<b>$1</b>");
-            
-                        // Replace ! with <i> and </i> tags for italic
-                        message = message.replaceAll("!(.*?)!", "<i>$1</i>");
-                    
-                        // Replace _ with <u> and </u> tags for underline
-                        message = message.replaceAll("_(.*?)_", "<u>$1</u>");
-
-
-                        //the color ones
-                        message = message.replaceAll("#r(.*?)r#", "< color='red'>$1</color>");
-
-
-                        message = message.replaceAll("#b(.*?)b#", "< color='blue'>$1</color>");
-
-
-                        message = message.replaceAll("#g(.*?)g#", "< color='green'>$1</color>");
-                    
-                    }
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+            } else {
+                // oha2 4/22
+                if (message.contains("*") || message.contains("!") || message.contains("_") || message.contains("#")) {
+                    // Replace * with <b> and </b> tags for bold
+                    message = message.replaceAll("\\*(.*?)\\*", "<b>$1</b>");
+
+                    // Replace ! with <i> and </i> tags for italic
+                    message = message.replaceAll("!(.*?)!", "<i>$1</i>");
+
+                    // Replace _ with <u> and </u> tags for underline
+                    message = message.replaceAll("_(.*?)_", "<u>$1</u>");
+
+                    // the color ones
+                    message = message.replaceAll("#r(.*?)r#", "<font style=color:red>$1</font>");
+
+                    message = message.replaceAll("#b(.*?)b#", "<font style=color:blue>$1</font>");
+
+                    message = message.replaceAll("#g(.*?)g#", "<font style=color:green>$1</font>");
+
+                }
             }
-            return wasCommand;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return wasCommand;
+    }
 
     // Command helper methods
     private synchronized void syncClientList(ServerThread joiner) {
@@ -179,6 +255,7 @@ public class Room implements AutoCloseable {
             }
         }
     }
+
     protected static void createRoom(String roomName, ServerThread client) {
         if (Server.INSTANCE.createNewRoom(roomName)) {
             // server.joinRoom(roomName, client);
@@ -187,45 +264,6 @@ public class Room implements AutoCloseable {
             client.sendMessage(Constants.DEFAULT_CLIENT_ID, String.format("Room %s already exists", roomName));
         }
     }
-    
-    
-
-
-    public static void roll(String message, ServerThread client) {
-        String[] parts = message.split("\\s+");
-        if (parts.length == 2) {
-            // Format 1: /roll 0 - X or 1 - X
-            if (parts[1].matches("\\d+")) {
-                int sides = Integer.parseInt(parts[1]);
-                if (sides > 0) {
-                    int result = (int) (Math.random() * sides) + 1;
-                    client.sendMessage(Constants.DEFAULT_CLIENT_ID, "Rolled a " + sides + "-sided die, result: " + result);
-                    return;
-                }
-            }
-        } else if (parts.length == 2 && parts[1].matches("\\d+d\\d+")) {
-            // Format 2: /roll #d#
-            String[] diceParts = parts[1].split("d");
-            int numDice = Integer.parseInt(diceParts[0]);
-            int sides = Integer.parseInt(diceParts[1]);
-            if (numDice > 0 && sides > 0) {
-                int total = 0;
-                StringBuilder rollResults = new StringBuilder("Rolled " + numDice + " " + sides + "-sided dice, results: ");
-                for (int i = 0; i < numDice; i++) {
-                    int roll = (int) (Math.random() * sides) + 1;
-                    total += roll;
-                    rollResults.append(roll).append(", ");
-                }
-                rollResults.delete(rollResults.length() - 2, rollResults.length()); // Remove last ", "
-                rollResults.append("Total: ").append(total);
-                client.sendMessage(Constants.DEFAULT_CLIENT_ID, rollResults.toString());
-                return;
-            }
-        }
-        // Invalid roll format
-        client.sendMessage(Constants.DEFAULT_CLIENT_ID, "Invalid roll format. Usage: /roll 0-X or 1-X, or #d#");
-    }
-
 
     protected static void joinRoom(String roomName, ServerThread client) {
         if (!Server.INSTANCE.joinRoom(roomName, client)) {
@@ -243,7 +281,6 @@ public class Room implements AutoCloseable {
         room.removeClient(client);
     }
 
-
     // end command helper methods
 
     /***
@@ -255,27 +292,75 @@ public class Room implements AutoCloseable {
      * @param message The message to broadcast inside the room
      */
     protected synchronized void sendMessage(ServerThread sender, String message) {
+
         if (!isRunning) {
             return;
         }
         info("Sending message to " + clients.size() + " clients");
         if (sender != null && processCommands(message, sender)) {
-            
-            
+
             // it was a command, don't broadcast
             return;
         }
+
+        if (message.startsWith("@")) {
+            sendPrivateMessage(sender, message);
+            return;
+        }
+        if(sender == null){
+            long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
+            Iterator<ServerThread> iter = clients.iterator();
+            while (iter.hasNext()) {
+                ServerThread client = iter.next();
+                boolean messageSent = client.sendMessage(from, message);
+        }
+    }
 
         /// String from = (sender == null ? "Room" : sender.getClientName());
         long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
         Iterator<ServerThread> iter = clients.iterator();
         while (iter.hasNext()) {
             ServerThread client = iter.next();
-            boolean messageSent = client.sendMessage(from, message);
-            if (!messageSent) {
-                handleDisconnect(iter, client);
+            if (!client.isMuted(sender.getClientName())) {
+                boolean messageSent = client.sendMessage(sender.getClientId(), message);
+
+                if (!messageSent) {
+                    handleDisconnect(iter, client);
+                }
             }
         }
+    }
+//oha2 4/25
+    protected synchronized void sendPrivateMessage(ServerThread sender, String message) {
+        if (!isRunning) {
+            return;
+        }
+        info("Sending message private");
+        
+        long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
+        Iterator<ServerThread> iter = clients.iterator();
+        String recipient = null;
+        String[] ws = message.split(" ");
+        if (client.isMutedsender.getClientName()){
+            return;
+        }
+        for (String w : ws) {
+            if (w.startsWith("@")) {
+                recipient = w.substring(1);
+
+                while (iter.hasNext()) {
+                    ServerThread c = iter.next();
+                    if (c.getClientName().equals(recipient)) {
+                        c.sendMessage(from, message);
+
+                    }
+                }
+
+            }
+        }
+        // sender.sendMesseage(sender, message);
+        /// String from = (sender == null ? "Room" : sender.getClientName());
+
     }
 
     protected synchronized void sendConnectionStatus(ServerThread sender, boolean isConnected) {
@@ -303,6 +388,4 @@ public class Room implements AutoCloseable {
         isRunning = false;
         clients = null;
     }
-
-        
 }
