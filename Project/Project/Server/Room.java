@@ -172,7 +172,7 @@ public class Room implements AutoCloseable {
                                     "<b style=color:red>Invalid roll format. Usage: /roll followed by a number , or #d#</b>");
                         }
                         break;
-
+//oha2 4/25
                     case "mute":
                         String[] splitMsg = message.split(" ");
 
@@ -330,17 +330,20 @@ public class Room implements AutoCloseable {
             }
         }
     }
-
+//oha2 4/25
     protected synchronized void sendPrivateMessage(ServerThread sender, String message) {
         if (!isRunning) {
             return;
         }
         info("Sending message private");
-
+        
         long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
         Iterator<ServerThread> iter = clients.iterator();
         String recipient = null;
         String[] ws = message.split(" ");
+        if (client.isMutedsender.getClientName()){
+            return;
+        }
         for (String w : ws) {
             if (w.startsWith("@")) {
                 recipient = w.substring(1);
