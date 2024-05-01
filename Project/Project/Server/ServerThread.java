@@ -1,9 +1,11 @@
 package Project.Server;
 
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -28,6 +30,7 @@ public class ServerThread extends Thread {
     // more easily
     private Room currentRoom;
     private Logger logger = Logger.getLogger(ServerThread.class.getName());
+public List<String> mutedList = new ArrayList<String>();
 
     private void info(String message) {
         logger.info(String.format("Thread[%s]: %s", getClientName(), message));
@@ -39,6 +42,14 @@ public class ServerThread extends Thread {
         this.client = myClient;
         // this.currentRoom = room;
 
+    }
+    public boolean isMuted(String clientName) {
+    	for(String name: mutedList) {
+    		if (name.equals(clientName)){
+    			return true;
+    		}
+    	}
+    	return false;
     }
 
     protected void setClientId(long id) {
@@ -52,6 +63,7 @@ public class ServerThread extends Thread {
     protected boolean isRunning() {
         return isRunning;
     }
+
     protected void setClientName(String name) {
         if (name == null || name.isBlank()) {
             logger.severe("Invalid client name being set");
@@ -104,6 +116,7 @@ public class ServerThread extends Thread {
         cp.setClientName(clientName);
         return send(cp);
     }
+
     private boolean sendListRooms(List<String> potentialRooms) {
         RoomResultsPayload rp = new RoomResultsPayload();
         rp.setRooms(potentialRooms);
@@ -234,6 +247,23 @@ public class ServerThread extends Thread {
                 }
                 List<String> potentialRooms = Room.listRooms(searchString, limit);
                 this.sendListRooms(potentialRooms);
+                break;
+            case FLIP:
+            if (currentRoom != null) {
+                currentRoom.sendMessage(null, p.getMessage());
+            } else {
+                Room.joinRoom(Constants.LOBBY, this);
+            }
+            break;
+            case ROLL:
+            if (currentRoom != null) {
+                currentRoom.sendMessage(null, p.getMessage());
+            } else {
+                Room.joinRoom(Constants.LOBBY, this);
+            }
+           
+           
+                
                 break;
             default:
                 break;
