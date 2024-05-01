@@ -325,7 +325,7 @@ public enum Client {
             p.setPayloadType(PayloadType.UNMUTE);
 
         }
-
+       
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         // no need to send an identifier, because the server knows who we are
@@ -353,13 +353,7 @@ public enum Client {
              message = message.replaceAll("#g(.*?)g#", "<font style=color:green>$1</font>");
 
         }
-        String recipient = null;
-        String[] ws = message.split(" ");
-        for (String w : ws) {
-            if (w.startsWith("@")) {
-                recipient = w.substring(1);
-            }
-        }
+      
 
     }
 

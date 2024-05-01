@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -29,6 +30,7 @@ public class ServerThread extends Thread {
     // more easily
     private Room currentRoom;
     private Logger logger = Logger.getLogger(ServerThread.class.getName());
+public List<String> mutedList = new ArrayList<String>();
 
     private void info(String message) {
         logger.info(String.format("Thread[%s]: %s", getClientName(), message));
@@ -40,6 +42,14 @@ public class ServerThread extends Thread {
         this.client = myClient;
         // this.currentRoom = room;
 
+    }
+    public boolean isMuted(String clientName) {
+    	for(String name: mutedList) {
+    		if (name.equals(clientName)){
+    			return true;
+    		}
+    	}
+    	return false;
     }
 
     protected void setClientId(long id) {
@@ -251,6 +261,8 @@ public class ServerThread extends Thread {
             } else {
                 Room.joinRoom(Constants.LOBBY, this);
             }
+           
+           
                 
                 break;
             default:
