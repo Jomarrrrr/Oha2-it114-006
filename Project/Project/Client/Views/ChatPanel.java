@@ -9,7 +9,11 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -34,6 +38,11 @@ public class ChatPanel extends JPanel {
     private JPanel chatArea = null;
     private UserListPanel userListPanel;
 
+
+    private StringBuilder chatlogger = new StringBuilder();
+    private final String TOP ="<!DOCTYPE html><head><title>chatlog</title></head><body>";
+    private final String FOOT ="</body></html>";
+
     public ChatPanel(ICardControls controls) {
         super(new BorderLayout(10, 10));
         JPanel wrapper = new JPanel();
@@ -56,6 +65,8 @@ public class ChatPanel extends JPanel {
         JTextField textValue = new JTextField();
         input.add(textValue);
         JButton button = new JButton("Send");
+        JButton exportb = new JButton("Export");
+
         // lets us submit with the enter key instead of just the button click
         textValue.addKeyListener(new KeyListener() {
 
@@ -87,7 +98,9 @@ public class ChatPanel extends JPanel {
                     // debugging
                     logger.log(Level.FINEST, "Content: " + content.getSize());
                     logger.log(Level.FINEST, "Parent: " + this.getSize());
-
+                    
+                    
+                    FileWriter export = new FileWriter("chat.txt");
                 }
             } catch (NullPointerException e) {
             } catch (IOException e1) {
@@ -95,11 +108,28 @@ public class ChatPanel extends JPanel {
                 e1.printStackTrace();
             }
         });
+          exportb.addActionListener((event) -> {
+            
+            FileWriter chatfile;
+            String mycontent= TOP+ chatlogger.toString()+FOOT;
+            try {
+                File file = new File(chatFile());
+                String absPath = file.getAbsolutePath();
+                chatfile = new FileWriter(file);
+                chatfile.write(mycontent);
+                chatfile.close();
+                  addText("<em>Your chat export: <br>"+absPath+"</em>");
+            } catch (IOException e1) {
+           
+                e1.printStackTrace();
+            }
+        });    
         chatArea = content;
         input.add(button);
         userListPanel = new UserListPanel();
         this.add(userListPanel, BorderLayout.EAST);
         this.add(input, BorderLayout.SOUTH);
+        this.add(exportb, BorderLayout.WEST);
         this.setName(CardView.CHAT.name());
         controls.addPanel(CardView.CHAT.name(), this);
         chatArea.addContainerListener(new ContainerListener() {
@@ -142,11 +172,11 @@ public class ChatPanel extends JPanel {
             }
         });
     }
-
+//oha2 4/30
     public void addUserListItem(long clientId, String clientName) {
-        if(clientName.isMuted || clientid.isMuted){
-            userListPanel.addUserListItem(clientId, "<font style = color:grey>" + clientName + "<font>");
-        }
+       /// if(clientName.isMuted || clientid.isMuted){
+        ///    userListPanel.addUserListItem(clientId, "<font style = color:grey>" + clientName + "<font>");
+       /// }
         userListPanel.addUserListItem(clientId, clientName);
     }
 
@@ -176,5 +206,13 @@ public class ChatPanel extends JPanel {
         // scroll down on new message
         JScrollBar vertical = ((JScrollPane) chatArea.getParent().getParent()).getVerticalScrollBar();
         vertical.setValue(vertical.getMaximum());
+        chatlogger.append(text+"<br>");
+    }
+    private String chatFile(){
+        LocalDateTime stamp = LocalDateTime.now();  
+        DateTimeFormatter format = DateTimeFormatter.ofPattern("_dd-MM-yyyy_HH-mm-ss");  
+        String formatedStamp = stamp.format(format);  
+        String filename="Project/Client/chatlogs/chat"+formatedStamp+".html";
+        return filename;
     }
 }
