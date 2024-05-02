@@ -100,13 +100,14 @@ public class ChatPanel extends JPanel {
                     logger.log(Level.FINEST, "Parent: " + this.getSize());
                     
                     
-                    FileWriter export = new FileWriter("chat.txt");
+                    
                 }
             } catch (NullPointerException e) {
             } catch (IOException e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
+            //oha2 4/30
         });
           exportb.addActionListener((event) -> {
             
@@ -114,11 +115,11 @@ public class ChatPanel extends JPanel {
             String mycontent= TOP+ chatlogger.toString()+FOOT;
             try {
                 File file = new File(chatFile());
-                String absPath = file.getAbsolutePath();
+                String filepath = file.getAbsolutePath();
                 chatfile = new FileWriter(file);
                 chatfile.write(mycontent);
                 chatfile.close();
-                  addText("<em>Your chat export: <br>"+absPath+"</em>");
+                  addText("<em>Chat exported to <br>"+filepath+"</em>");
             } catch (IOException e1) {
            
                 e1.printStackTrace();
@@ -187,7 +188,7 @@ public class ChatPanel extends JPanel {
     public void clearUserList() {
         userListPanel.clearUserList();
     }
-//oha2 4/19
+//oha2 4/30
     public void addText(String text) {
         JPanel content = chatArea;
         // add message
