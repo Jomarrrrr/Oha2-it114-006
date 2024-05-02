@@ -6,7 +6,7 @@
 
 
 proposal video
-https://youtu.be/XspdpkXKhL0
+[https://youtu.be/XspdpkXKhL0](https://youtu.be/lXfwGf2hMJY?si=fll7gGR3x8ECLToP)
 
 
 
