@@ -27,6 +27,7 @@ import Project.Client.CardView;
 import Project.Client.Client;
 import Project.Client.ClientUtils;
 import Project.Client.ICardControls;
+import Project.Server.ServerThread;
 
 public class ChatPanel extends JPanel {
     private static Logger logger = Logger.getLogger(ChatPanel.class.getName());
@@ -143,6 +144,9 @@ public class ChatPanel extends JPanel {
     }
 
     public void addUserListItem(long clientId, String clientName) {
+        if(clientName.isMuted || clientid.isMuted){
+            userListPanel.addUserListItem(clientId, "<font style = color:grey>" + clientName + "<font>");
+        }
         userListPanel.addUserListItem(clientId, clientName);
     }
 
@@ -153,7 +157,7 @@ public class ChatPanel extends JPanel {
     public void clearUserList() {
         userListPanel.clearUserList();
     }
-
+//oha2 4/19
     public void addText(String text) {
         JPanel content = chatArea;
         // add message

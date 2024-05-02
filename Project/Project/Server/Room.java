@@ -341,7 +341,7 @@ public class Room implements AutoCloseable {
         Iterator<ServerThread> iter = clients.iterator();
         String recipient = null;
         String[] ws = message.split(" ");
-        if (client.isMutedsender.getClientName()){
+        if (client.isMuted(sender.getClientName())){
             return;
         }
         for (String w : ws) {
