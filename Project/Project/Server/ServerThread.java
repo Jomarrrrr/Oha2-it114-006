@@ -10,7 +10,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+
 import java.util.Arrays;
+n
 import java.util.List;
 import java.util.Scanner;
 import java.util.logging.Logger;
@@ -49,6 +51,7 @@ public List<String> mutedList = new ArrayList<String>();
         // this.currentRoom = room;
 
     }
+
     //oha2 4/25
     public boolean isMuted(String clientName) {
     	for(String name: mutedList) {
@@ -56,6 +59,7 @@ public List<String> mutedList = new ArrayList<String>();
                 
     			return true;
                // writeMutedList();
+
     		}
     	}
     	return false;

@@ -124,12 +124,14 @@ public class Room implements AutoCloseable {
                         Random num = new Random();
                         int randomNum = num.nextInt(2) + 1;
                         String face = "test";
+
                         
                         if (randomNum == 1) {
                             face = "<b style=color:blue>"+ boy +" got heads!</b>";
                             sendMessage(null, String.format("" + face));
                         } else {
                             face = "<b style=color:orange>"+ boy +" got tails!</b>";
+
                             sendMessage(null, String.format("" + face));
                         }
                         sendMessage(null, String.format("testo"));
@@ -143,8 +145,8 @@ public class Room implements AutoCloseable {
                                 int sides = Integer.parseInt(parts[1]);
                                 if (sides > 0) {
                                     int result = (int) (Math.random() * sides) + 1;
+
                                     sendMessage(null, "<b style=color:blue>"+ boy +"Rolled a " + sides + "-sided die, result: "
-                                            + result + "</b>");
 
                                 }
                             }
@@ -174,7 +176,7 @@ public class Room implements AutoCloseable {
                                     "<b style=color:red>Invalid roll format. Usage: /roll followed by a number , or #d#</b>");
                         }
                         break;
-//oha2 4/30
+
                     case "mute":
                         String[] splitMsg = message.split(" ");
 
@@ -189,6 +191,7 @@ public class Room implements AutoCloseable {
                                 c.sendMessage(client.getClientId(), " <i>muted " + mutedClient + "</i>");
                             }
                         }
+
                        // sendMessage(client, "<i><b>muted " + mutedClient + "</b></i>");
 
                         break;
@@ -199,6 +202,8 @@ public class Room implements AutoCloseable {
                         for (String name : client.mutedList) {
                             if (name.equals(unmutedClient)) {
                                 client.mutedList.remove(unmutedClient);
+
+
 
                                 Iterator<ServerThread> iter1 = clients.iterator();
                                 while (iter1.hasNext()) {
@@ -341,9 +346,11 @@ public class Room implements AutoCloseable {
         Iterator<ServerThread> iter = clients.iterator();
         String recipient = null;
         String[] ws = message.split(" ");
+
        // if (client.isMuted(sender.getClientName())){
        //     return;
        // }
+
         for (String w : ws) {
             if (w.startsWith("@")) {
                 recipient = w.substring(1);
