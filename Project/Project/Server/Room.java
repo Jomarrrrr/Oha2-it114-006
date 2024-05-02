@@ -91,6 +91,7 @@ public class Room implements AutoCloseable {
      */
     private boolean processCommands(String message, ServerThread client) {
         boolean wasCommand = false;
+        String boy = client.getClientName();
         try {
             if (message.startsWith(COMMAND_TRIGGER)) {
                 String[] comm = message.split(COMMAND_TRIGGER);
@@ -123,11 +124,14 @@ public class Room implements AutoCloseable {
                         Random num = new Random();
                         int randomNum = num.nextInt(2) + 1;
                         String face = "test";
+
+                        
                         if (randomNum == 1) {
-                            face = "<b style=color:blue>You got heads!</b>";
+                            face = "<b style=color:blue>"+ boy +" got heads!</b>";
                             sendMessage(null, String.format("" + face));
                         } else {
-                            face = "<b style=color:orange>You got tails!</b>";
+                            face = "<b style=color:orange>"+ boy +" got tails!</b>";
+
                             sendMessage(null, String.format("" + face));
                         }
                         sendMessage(null, String.format("testo"));
@@ -141,8 +145,8 @@ public class Room implements AutoCloseable {
                                 int sides = Integer.parseInt(parts[1]);
                                 if (sides > 0) {
                                     int result = (int) (Math.random() * sides) + 1;
-                                    sendMessage(null, "<b style=color:blue>Rolled a " + sides + "-sided die, result: "
-                                            + result + "</b>");
+
+                                    sendMessage(null, "<b style=color:blue>"+ boy +"Rolled a " + sides + "-sided die, result: "
 
                                 }
                             }
@@ -172,14 +176,13 @@ public class Room implements AutoCloseable {
                                     "<b style=color:red>Invalid roll format. Usage: /roll followed by a number , or #d#</b>");
                         }
                         break;
-//oha2 4/25
+
                     case "mute":
                         String[] splitMsg = message.split(" ");
 
                         String mutedClient = splitMsg[1];
                         client.mutedList.add(mutedClient);
 
-                        // sends a message to the muted user and the client that muted them
                         Iterator<ServerThread> iter = clients.iterator();
                         while (iter.hasNext()) {
                             ServerThread c = iter.next();
@@ -188,7 +191,8 @@ public class Room implements AutoCloseable {
                                 c.sendMessage(client.getClientId(), " <i>muted " + mutedClient + "</i>");
                             }
                         }
-                        sendMessage(client, "<i><b>muted " + mutedClient + "</b></i>");
+
+                       // sendMessage(client, "<i><b>muted " + mutedClient + "</b></i>");
 
                         break;
                     case "unmute":
@@ -199,7 +203,8 @@ public class Room implements AutoCloseable {
                             if (name.equals(unmutedClient)) {
                                 client.mutedList.remove(unmutedClient);
 
-                                // sends a message to the unmuted user and the client that unmuted them
+
+
                                 Iterator<ServerThread> iter1 = clients.iterator();
                                 while (iter1.hasNext()) {
                                     ServerThread c = iter1.next();
@@ -341,9 +346,11 @@ public class Room implements AutoCloseable {
         Iterator<ServerThread> iter = clients.iterator();
         String recipient = null;
         String[] ws = message.split(" ");
-        if (client.isMutedsender.getClientName()){
-            return;
-        }
+
+       // if (client.isMuted(sender.getClientName())){
+       //     return;
+       // }
+
         for (String w : ws) {
             if (w.startsWith("@")) {
                 recipient = w.substring(1);

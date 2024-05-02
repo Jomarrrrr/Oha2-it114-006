@@ -1,12 +1,20 @@
 package Project.Server;
 
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+
+import java.util.Arrays;
+n
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 import Project.Common.ConnectionPayload;
@@ -43,15 +51,35 @@ public List<String> mutedList = new ArrayList<String>();
         // this.currentRoom = room;
 
     }
+
+    //oha2 4/25
     public boolean isMuted(String clientName) {
     	for(String name: mutedList) {
     		if (name.equals(clientName)){
+                
     			return true;
+               // writeMutedList();
+
     		}
     	}
     	return false;
     }
+    /* 
+     void writeMutedList() {
+    	 String data = clientName + ": " + String.join("; ", mutedClients);
 
+    	 try {
+ 	 		FileWriter export = new FileWriter(clientName + ".txt");
+ 	 		BufferedWriter bwriter = new BufferedWriter(export);
+              bwriter.write("" + data); 
+              bwriter.close();
+ 		} catch (IOException e) {
+ 			e.printStackTrace();
+ 		}
+    }
+    
+   
+*/
     protected void setClientId(long id) {
         clientId = id;
         if (id == Constants.DEFAULT_CLIENT_ID) {
